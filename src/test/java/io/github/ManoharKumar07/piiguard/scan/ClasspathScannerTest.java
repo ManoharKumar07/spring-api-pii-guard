@@ -1,6 +1,8 @@
 package io.github.ManoharKumar07.piiguard.scan;
 
+import io.github.ManoharKumar07.piiguard.fixtures.controllers.CircularController;
 import io.github.ManoharKumar07.piiguard.fixtures.controllers.SafeProductController;
+import io.github.ManoharKumar07.piiguard.fixtures.controllers.SensitiveDataController;
 import io.github.ManoharKumar07.piiguard.fixtures.controllers.SuppressedFieldController;
 import io.github.ManoharKumar07.piiguard.fixtures.controllers.VulnerableUserController;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +27,12 @@ class ClasspathScannerTest {
                 List.of("io.github.ManoharKumar07.piiguard.fixtures.controllers"));
 
         assertThat(controllers)
-                .containsExactlyInAnyOrder(VulnerableUserController.class, SafeProductController.class,
-                        SuppressedFieldController.class);
+                .containsExactlyInAnyOrder(
+                        VulnerableUserController.class,
+                        SafeProductController.class,
+                        SuppressedFieldController.class,
+                        SensitiveDataController.class,
+                        CircularController.class);
     }
 
     @Test

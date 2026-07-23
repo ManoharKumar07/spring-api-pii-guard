@@ -10,8 +10,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class AnalysisEngineTest {
 
@@ -222,5 +224,229 @@ class AnalysisEngineTest {
         AnalysisResult result = engine.analyze(config);
 
         assertThat(result.endpoints()).isNotEmpty();
+    }
+
+    // -----------------------------------------------------------------------
+    // Financial / Credential findings (FinancialDto via SensitiveDataController)
+    // -----------------------------------------------------------------------
+
+    @Test
+    void detectsCreditCardFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("creditCard")
+                        && f.severity() == Severity.HIGH);
+    }
+
+    @Test
+    void detectsCvvFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("cvv")
+                        && f.severity() == Severity.HIGH);
+    }
+
+    @Test
+    void detectsBankAccountFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("accountNumber")
+                        && f.severity() == Severity.HIGH);
+    }
+
+    @Test
+    void detectsOtpFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("otp")
+                        && f.severity() == Severity.CRITICAL);
+    }
+
+    // -----------------------------------------------------------------------
+    // Personal / Location findings (PersonalInfoDto via SensitiveDataController)
+    // -----------------------------------------------------------------------
+
+    @Test
+    void detectsNationalIdFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("nationalId")
+                        && f.severity() == Severity.HIGH);
+    }
+
+    @Test
+    void detectsPhoneFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("phone")
+                        && f.severity() == Severity.MEDIUM);
+    }
+
+    @Test
+    void detectsDateOfBirthFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("dateOfBirth")
+                        && f.severity() == Severity.MEDIUM);
+    }
+
+    @Test
+    void detectsHealthDiagnosisFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("diagnosis")
+                        && f.severity() == Severity.MEDIUM);
+    }
+
+    @Test
+    void detectsBiometricFingerprintFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("fingerprint")
+                        && f.severity() == Severity.MEDIUM);
+    }
+
+    @Test
+    void detectsGenderFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("gender")
+                        && f.severity() == Severity.MEDIUM);
+    }
+
+    @Test
+    void detectsSalaryFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("salary")
+                        && f.severity() == Severity.MEDIUM);
+    }
+
+    @Test
+    void detectsAddressFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("address")
+                        && f.severity() == Severity.LOW);
+    }
+
+    @Test
+    void detectsLocationLatitudeFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("latitude")
+                        && f.severity() == Severity.LOW);
+    }
+
+    @Test
+    void detectsIpAddressFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("ipAddress")
+                        && f.severity() == Severity.LOW);
+    }
+
+    @Test
+    void detectsEthnicityFieldInResponseDto() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .anyMatch(f -> f.fieldName().equals("ethnicity")
+                        && f.severity() == Severity.LOW);
+    }
+
+    // -----------------------------------------------------------------------
+    // Edge cases
+    // -----------------------------------------------------------------------
+
+    @Test
+    void handlesCircularDtoReferencesWithoutException() {
+        // CircularController returns CircularADto → CircularBDto → CircularADto (circular).
+        // The engine must not throw StackOverflowError or any other exception.
+        assertThatNoException().isThrownBy(() -> engine.analyze(config));
+    }
+
+    @Test
+    void circularDtoFieldsProduceNoFindings() {
+        AnalysisResult result = engine.analyze(config);
+
+        // CircularADto.name, CircularBDto.owner — none of these are PII field names.
+        assertThat(result.findings())
+                .noneMatch(f -> f.dtoClassName().contains("CircularADto")
+                             || f.dtoClassName().contains("CircularBDto"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Finding quality assertions
+    // -----------------------------------------------------------------------
+
+    @Test
+    void findingsContainCorrectEndpointPath() {
+        AnalysisResult result = engine.analyze(config);
+
+        // All findings must have a non-blank endpoint path
+        assertThat(result.findings())
+                .allMatch(f -> f.endpointPath() != null && !f.endpointPath().isBlank());
+    }
+
+    @Test
+    void findingsContainValidHttpMethod() {
+        AnalysisResult result = engine.analyze(config);
+
+        Set<String> validMethods = Set.of("GET", "POST", "PUT", "DELETE", "PATCH");
+        assertThat(result.findings())
+                .allMatch(f -> validMethods.contains(f.httpMethod()));
+    }
+
+    @Test
+    void allFindingsHaveNonBlankRecommendations() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .allMatch(f -> f.recommendation() != null && !f.recommendation().isBlank());
+    }
+
+    @Test
+    void allFindingsHaveNonBlankPiiCategory() {
+        AnalysisResult result = engine.analyze(config);
+
+        assertThat(result.findings())
+                .allMatch(f -> f.piiCategory() != null && !f.piiCategory().isBlank());
+    }
+
+    @Test
+    void multipleSeverityLevelsDetectedInSingleScan() {
+        AnalysisResult result = engine.analyze(config);
+
+        // Fixtures span CRITICAL (passwords, token, otp), HIGH (SSN, Aadhaar, credit card …),
+        // MEDIUM (phone, DOB, gender …), and LOW (address, latitude, IP …) findings.
+        assertThat(result.countBySeverity(Severity.CRITICAL)).isPositive();
+        assertThat(result.countBySeverity(Severity.HIGH)).isPositive();
+        assertThat(result.countBySeverity(Severity.MEDIUM)).isPositive();
+        assertThat(result.countBySeverity(Severity.LOW)).isPositive();
+    }
+
+    @Test
+    void findingLinksToCorrectControllerClass() {
+        AnalysisResult result = engine.analyze(config);
+
+        // VulnerableUserController findings must reference that controller's FQN
+        assertThat(result.findings())
+                .anyMatch(f -> f.controllerClass()
+                        .contains("VulnerableUserController"));
     }
 }
