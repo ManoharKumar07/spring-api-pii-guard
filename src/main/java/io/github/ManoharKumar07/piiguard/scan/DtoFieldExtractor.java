@@ -3,6 +3,7 @@ package io.github.ManoharKumar07.piiguard.scan;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.ManoharKumar07.piiguard.model.DtoInfo;
 import io.github.ManoharKumar07.piiguard.model.FieldInfo;
+import io.github.ManoharKumar07.piiguard.suppress.PiiGuardSuppress;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -64,6 +65,8 @@ public final class DtoFieldExtractor {
                 .map(a -> a.annotationType().getSimpleName())
                 .collect(Collectors.toUnmodifiableList());
 
+        List<String> suppressedRules = resolveSuppressedRules(field);
+
         // Resolve the effective element type (unwraps List<T> → T, Map<K,V> → V)
         Class<?> elementType = resolveEffectiveType(field.getGenericType());
         DtoInfo nestedDto = null;
@@ -71,7 +74,7 @@ public final class DtoFieldExtractor {
             nestedDto = extract(elementType, remainingDepth, visited);
         }
 
-        return new FieldInfo(name, jsonName, typeName, isCollectionField, nestedDto, annotationNames);
+        return new FieldInfo(name, jsonName, typeName, isCollectionField, nestedDto, annotationNames, suppressedRules);
     }
 
     /**
@@ -84,6 +87,26 @@ public final class DtoFieldExtractor {
             return jsonProperty.value();
         }
         return field.getName();
+    }
+
+    /**
+     * Reads any {@code @PiiGuardSuppress} annotation on the field and returns the list of
+     * suppressed rule IDs.
+     * <ul>
+     *   <li>If the annotation is absent, returns an empty list.</li>
+     *   <li>If {@code rules()} is empty, returns {@code ["*"]} meaning all rules are suppressed.</li>
+     *   <li>Otherwise, returns the explicit rule IDs listed in the annotation.</li>
+     * </ul>
+     */
+    private List<String> resolveSuppressedRules(Field field) {
+        PiiGuardSuppress suppress = field.getAnnotation(PiiGuardSuppress.class);
+        if (suppress == null) {
+            return List.of();
+        }
+        if (suppress.rules().length == 0) {
+            return List.of("*");
+        }
+        return List.of(suppress.rules());
     }
 
     /**

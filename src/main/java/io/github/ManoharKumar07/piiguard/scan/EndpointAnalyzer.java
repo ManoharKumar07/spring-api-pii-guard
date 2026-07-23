@@ -174,7 +174,7 @@ public final class EndpointAnalyzer {
             if (pv != null) {
                 String name = resolveParamName(pv.value(), pv.name(), param.getName());
                 result.add(new FieldInfo(name, name, param.getType().getSimpleName(),
-                        false, null, List.of("PathVariable")));
+                        false, null, List.of("PathVariable"), List.of()));
             }
         }
         return result;
@@ -187,7 +187,7 @@ public final class EndpointAnalyzer {
             if (rp != null) {
                 String name = resolveParamName(rp.value(), rp.name(), param.getName());
                 result.add(new FieldInfo(name, name, param.getType().getSimpleName(),
-                        false, null, List.of("RequestParam")));
+                        false, null, List.of("RequestParam"), List.of()));
             }
         }
         return result;
