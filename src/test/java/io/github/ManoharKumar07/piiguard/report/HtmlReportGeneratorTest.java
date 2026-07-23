@@ -97,7 +97,316 @@ class HtmlReportGeneratorTest {
     }
 
     // -----------------------------------------------------------------------
-    // HTML content — result with findings
+    // Phase 5 — embedded JavaScript
+    // -----------------------------------------------------------------------
+
+    @Test
+    void embeddedJavaScriptIsPresent(@TempDir Path dir) throws IOException {
+        String html = readReport(dir, emptyResult());
+        assertThat(html)
+                .contains("<script>")
+                .contains("</script>");
+        // Must be inline — no external script reference
+        assertThat(html).doesNotContain("script src=");
+    }
+
+    @Test
+    void javaScriptContainsSeverityFilterFunction(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("setSeverityFilter");
+    }
+
+    @Test
+    void javaScriptContainsApplyFiltersFunction(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("applyFilters");
+    }
+
+    @Test
+    void javaScriptContainsToggleEndpointFunction(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("toggleEp");
+    }
+
+    @Test
+    void javaScriptContainsCopyFindingFunction(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("copyFinding");
+    }
+
+    // -----------------------------------------------------------------------
+    // Phase 5 — filter bar and search (appear when findings exist)
+    // -----------------------------------------------------------------------
+
+    @Test
+    void filterButtonsArePresentWhenFindingsExist(@TempDir Path dir) throws IOException {
+        AnalysisResult result = resultWithFinding(
+                finding("PASSWORD_EXPOSURE", Severity.CRITICAL, "password", "GET", "/api/users"));
+        String html = readReport(dir, result);
+        assertThat(html)
+                .contains("filter-btn")
+                .contains("filter-critical")
+                .contains("filter-high")
+                .contains("filter-medium")
+                .contains("filter-low")
+                .contains("filter-info");
+    }
+
+    @Test
+    void allFilterButtonIsActiveByDefault(@TempDir Path dir) throws IOException {
+        AnalysisResult result = resultWithFinding(
+                finding("A", Severity.HIGH, "ssn", "GET", "/api/users"));
+        String html = readReport(dir, result);
+        // The "all" filter button must have the 'active' class
+        assertThat(html).contains("data-severity=\"all\"");
+    }
+
+    @Test
+    void searchInputIsPresentWhenFindingsExist(@TempDir Path dir) throws IOException {
+        AnalysisResult result = resultWithFinding(
+                finding("EMAIL_EXPOSURE", Severity.MEDIUM, "email", "GET", "/api/users"));
+        assertThat(readReport(dir, result)).contains("findings-search");
+    }
+
+    @Test
+    void findingRowHasDataSeverityAttribute(@TempDir Path dir) throws IOException {
+        AnalysisResult result = resultWithFinding(
+                finding("PASSWORD_EXPOSURE", Severity.CRITICAL, "password", "GET", "/api/users"));
+        assertThat(readReport(dir, result)).contains("data-severity=\"critical\"");
+    }
+
+    @Test
+    void findingRowsHaveDataSeverityForEachLevel(@TempDir Path dir) throws IOException {
+        AnalysisResult result = new AnalysisResult(
+                List.of(),
+                List.of(
+                        finding("A", Severity.CRITICAL, "f1", "GET", "/p"),
+                        finding("B", Severity.HIGH,     "f2", "GET", "/p"),
+                        finding("C", Severity.MEDIUM,   "f3", "GET", "/p"),
+                        finding("D", Severity.LOW,      "f4", "GET", "/p"),
+                        finding("E", Severity.INFO,     "f5", "GET", "/p")
+                ),
+                Instant.now()
+        );
+        String html = readReport(dir, result);
+        assertThat(html)
+                .contains("data-severity=\"critical\"")
+                .contains("data-severity=\"high\"")
+                .contains("data-severity=\"medium\"")
+                .contains("data-severity=\"low\"")
+                .contains("data-severity=\"info\"");
+    }
+
+    @Test
+    void copyButtonIsPresentForEachFinding(@TempDir Path dir) throws IOException {
+        AnalysisResult result = resultWithFinding(
+                finding("PASSWORD_EXPOSURE", Severity.CRITICAL, "password", "GET", "/api/users"));
+        assertThat(readReport(dir, result)).contains("copy-btn");
+    }
+
+    @Test
+    void copyButtonTriggersJavaScriptFunction(@TempDir Path dir) throws IOException {
+        AnalysisResult result = resultWithFinding(
+                finding("PASSWORD_EXPOSURE", Severity.CRITICAL, "password", "GET", "/api/users"));
+        assertThat(readReport(dir, result)).contains("copyFinding(this)");
+    }
+
+    // -----------------------------------------------------------------------
+    // Phase 5 — endpoint expand/collapse
+    // -----------------------------------------------------------------------
+
+    @Test
+    void endpointRowsHaveEpRowClass(@TempDir Path dir) throws IOException {
+        AnalysisResult result = new AnalysisResult(
+                List.of(endpoint("GET", "/api/users", "com.example.UserController")),
+                List.of(),
+                Instant.now()
+        );
+        assertThat(readReport(dir, result)).contains("ep-row");
+    }
+
+    @Test
+    void endpointDetailRowsStartHidden(@TempDir Path dir) throws IOException {
+        AnalysisResult result = new AnalysisResult(
+                List.of(endpoint("GET", "/api/users", "com.example.UserController")),
+                List.of(),
+                Instant.now()
+        );
+        String html = readReport(dir, result);
+        assertThat(html)
+                .contains("ep-detail")
+                .contains("display:none");
+    }
+
+    @Test
+    void endpointRowHasExpandIcon(@TempDir Path dir) throws IOException {
+        AnalysisResult result = new AnalysisResult(
+                List.of(endpoint("GET", "/api/users", "com.example.UserController")),
+                List.of(),
+                Instant.now()
+        );
+        assertThat(readReport(dir, result)).contains("expand-icon");
+    }
+
+    @Test
+    void endpointDetailRowHasColspan(@TempDir Path dir) throws IOException {
+        AnalysisResult result = new AnalysisResult(
+                List.of(endpoint("GET", "/api/users", "com.example.UserController")),
+                List.of(),
+                Instant.now()
+        );
+        assertThat(readReport(dir, result)).contains("colspan=\"6\"");
+    }
+
+    // -----------------------------------------------------------------------
+    // Phase 5 — Recommendations section
+    // -----------------------------------------------------------------------
+
+    @Test
+    void recommendationsSectionIsPresentInReport(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("Recommendations");
+    }
+
+    @Test
+    void recommendationsShowsCleanMessageWhenNoFindings(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("rec-clean");
+    }
+
+    @Test
+    void recommendationsContainsCategoryFromFindings(@TempDir Path dir) throws IOException {
+        Finding f = new Finding(
+                "PASSWORD_EXPOSURE", Severity.CRITICAL, "Credentials",
+                "password", "password", "com.example.Dto",
+                "/api/users", "GET", "com.example.Controller",
+                "msg", "rec", false, true
+        );
+        String html = readReport(dir, resultWithFinding(f));
+        assertThat(html).contains("Credentials");
+    }
+
+    @Test
+    void recommendationsContainsSeverityBadgeForCategory(@TempDir Path dir) throws IOException {
+        Finding f = new Finding(
+                "PASSWORD_EXPOSURE", Severity.CRITICAL, "Credentials",
+                "password", "password", "com.example.Dto",
+                "/api/users", "GET", "com.example.Controller",
+                "msg", "rec", false, true
+        );
+        String html = readReport(dir, resultWithFinding(f));
+        // The recommendations section must have a CRITICAL badge for the Credentials category
+        assertThat(html).contains("rec-item sev-critical");
+    }
+
+    @Test
+    void recommendationsContainsActionableAdvice(@TempDir Path dir) throws IOException {
+        Finding f = new Finding(
+                "PASSWORD_EXPOSURE", Severity.CRITICAL, "Credentials",
+                "password", "password", "com.example.Dto",
+                "/api/users", "GET", "com.example.Controller",
+                "msg", "rec", false, true
+        );
+        String html = readReport(dir, resultWithFinding(f));
+        assertThat(html).contains("@JsonIgnore");
+    }
+
+    @Test
+    void recommendationsSkipsInfoFindings(@TempDir Path dir) throws IOException {
+        // INFO finding (JsonIgnore) should NOT produce a rec-item
+        Finding infoFinding = new Finding(
+                "JSON_IGNORE_CORRECT", Severity.INFO, "Serialisation Control",
+                "password", "password", "com.example.Dto",
+                "/api/users", "GET", "com.example.Controller",
+                "msg", "rec", false, true
+        );
+        String html = readReport(dir, resultWithFinding(infoFinding));
+        // No rec-item *element* should appear (the CSS class definition is always present,
+        // but no <div class="rec-item"> should be rendered when all findings are INFO)
+        assertThat(html).contains("rec-clean");
+        assertThat(html).doesNotContain("class=\"rec-item");
+    }
+
+    @Test
+    void recommendationsAreOrderedBySeverity(@TempDir Path dir) throws IOException {
+        AnalysisResult result = new AnalysisResult(
+                List.of(),
+                List.of(
+                        new Finding("A", Severity.MEDIUM, "Contact Information",
+                                "email", "email", "Dto", "/p", "GET", "Ctrl", "m", "r", false, true),
+                        new Finding("B", Severity.CRITICAL, "Credentials",
+                                "password", "password", "Dto", "/p", "GET", "Ctrl", "m", "r", false, true)
+                ),
+                Instant.now()
+        );
+        String html = readReport(dir, result);
+        // After sorting by severity, CRITICAL (Credentials) should appear before MEDIUM (Contact Information)
+        assertThat(html.indexOf("sev-critical")).isLessThan(html.indexOf("sev-medium"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Phase 5 — Scan Metadata section
+    // -----------------------------------------------------------------------
+
+    @Test
+    void scanMetadataSectionIsPresent(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("Scan Metadata");
+    }
+
+    @Test
+    void scanMetadataShowsTimestampLabel(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("Generated");
+    }
+
+    @Test
+    void scanMetadataShowsEndpointsScannedLabel(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("Endpoints Scanned");
+    }
+
+    @Test
+    void scanMetadataShowsControllersFoundLabel(@TempDir Path dir) throws IOException {
+        assertThat(readReport(dir, emptyResult())).contains("Controllers Found");
+    }
+
+    @Test
+    void scanMetadataShowsCorrectEndpointCount(@TempDir Path dir) throws IOException {
+        AnalysisResult result = new AnalysisResult(
+                List.of(
+                        endpoint("GET",  "/api/users",    "com.example.UserController"),
+                        endpoint("POST", "/api/products", "com.example.ProductController")
+                ),
+                List.of(),
+                Instant.now()
+        );
+        String html = readReport(dir, result);
+        // "2" should appear in the metadata grid for endpoint count
+        assertThat(html).contains("Endpoints Scanned");
+        assertThat(html).contains("<div class=\"meta-value\">2</div>");
+    }
+
+    @Test
+    void scanMetadataShowsPackageTagsWhenEndpointsExist(@TempDir Path dir) throws IOException {
+        AnalysisResult result = new AnalysisResult(
+                List.of(endpoint("GET", "/api/users", "com.example.api.UserController")),
+                List.of(),
+                Instant.now()
+        );
+        assertThat(readReport(dir, result)).contains("pkg-tag");
+    }
+
+    @Test
+    void scanMetadataShowsControllerCount(@TempDir Path dir) throws IOException {
+        AnalysisResult result = new AnalysisResult(
+                List.of(
+                        endpoint("GET",  "/api/users",        "com.example.UserController"),
+                        endpoint("POST", "/api/users",        "com.example.UserController"),
+                        endpoint("GET",  "/api/products",     "com.example.ProductController")
+                ),
+                List.of(),
+                Instant.now()
+        );
+        String html = readReport(dir, result);
+        // 2 distinct controllers
+        assertThat(html).contains("Controllers Found");
+        assertThat(html).contains("<div class=\"meta-value\">2</div>");
+    }
+
+    // -----------------------------------------------------------------------
+    // HTML content — result with findings (existing tests preserved)
     // -----------------------------------------------------------------------
 
     @Test
@@ -114,7 +423,6 @@ class HtmlReportGeneratorTest {
 
         String html = readReport(dir, result);
 
-        // CRITICAL must appear before HIGH, which must appear before MEDIUM in the table.
         int criticalPos = html.indexOf("PASSWORD_EXPOSURE");
         int highPos     = html.indexOf("SSN_EXPOSURE");
         int mediumPos   = html.indexOf("EMAIL_EXPOSURE");
@@ -153,7 +461,6 @@ class HtmlReportGeneratorTest {
                 ),
                 Instant.now()
         );
-        // The report has a status-danger banner because CRITICAL findings exist.
         assertThat(readReport(dir, result)).contains("status-danger");
     }
 
@@ -197,8 +504,8 @@ class HtmlReportGeneratorTest {
     void maliciousFieldNameIsEscaped(@TempDir Path dir) throws IOException {
         Finding malicious = new Finding(
                 "RULE", Severity.HIGH, "Cat",
-                "<script>alert('xss')</script>",   // fieldName
-                "<script>",                         // fieldJsonName
+                "<script>alert('xss')</script>",
+                "<script>",
                 "com.example.Dto",
                 "/api/test", "GET", "com.example.Controller",
                 "message", "recommendation", false, true
@@ -207,6 +514,25 @@ class HtmlReportGeneratorTest {
         assertThat(html)
                 .doesNotContain("<script>alert(")
                 .contains("&lt;script&gt;");
+    }
+
+    // -----------------------------------------------------------------------
+    // escJs helper
+    // -----------------------------------------------------------------------
+
+    @Test
+    void escJsEscapesSingleQuote() {
+        assertThat(HtmlReportGenerator.escJs("it's")).isEqualTo("it\\'s");
+    }
+
+    @Test
+    void escJsEscapesBackslash() {
+        assertThat(HtmlReportGenerator.escJs("C:\\path")).isEqualTo("C:\\\\path");
+    }
+
+    @Test
+    void escJsNullReturnsEmptyString() {
+        assertThat(HtmlReportGenerator.escJs(null)).isEmpty();
     }
 
     // -----------------------------------------------------------------------
@@ -232,6 +558,11 @@ class HtmlReportGeneratorTest {
                 "Test recommendation",
                 false, true
         );
+    }
+
+    private static ScannedEndpoint endpoint(String method, String path, String controllerClass) {
+        return new ScannedEndpoint(method, path, controllerClass, "testMethod",
+                null, null, List.of(), List.of());
     }
 
     private String readReport(Path dir, AnalysisResult result) throws IOException {
