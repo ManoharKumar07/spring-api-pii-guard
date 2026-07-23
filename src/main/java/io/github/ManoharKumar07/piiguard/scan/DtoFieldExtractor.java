@@ -14,16 +14,16 @@ import java.util.stream.Collectors;
 /**
  * Recursively extracts field metadata from DTO classes using Java Reflection.
  *
- * <h3>Cycle detection</h3>
+ * <h2>Cycle detection</h2>
  * A {@code visited} set is threaded through the recursion. When a class is encountered
  * a second time (e.g. {@code User} → {@code Address} → {@code User}), a terminal
  * {@link DtoInfo} with no fields is returned, stopping the recursion.
  *
- * <h3>Depth limiting</h3>
+ * <h2>Depth limiting</h2>
  * The {@code maxDepth} parameter caps the recursion depth regardless of cycles.
  * A default of 5 is sufficient for real-world DTOs.
  *
- * <h3>Inherited fields</h3>
+ * <h2>Inherited fields</h2>
  * {@link #getAllFields(Class)} walks the superclass hierarchy so fields declared
  * in parent classes (e.g. {@code BaseDto}) are included.
  */

@@ -15,11 +15,11 @@ import java.util.*;
 /**
  * Extracts {@link ScannedEndpoint} metadata from a {@code @RestController} class.
  *
- * <h3>Path resolution</h3>
+ * <h2>Path resolution</h2>
  * The full endpoint path is the combination of the class-level {@code @RequestMapping}
  * prefix and the method-level mapping annotation path.
  *
- * <h3>Generic type resolution</h3>
+ * <h2>Generic type resolution</h2>
  * Return types are unwrapped to locate the actual response DTO:
  * {@code ResponseEntity<UserDto>} → {@code UserDto},
  * {@code List<UserDto>} → {@code UserDto},

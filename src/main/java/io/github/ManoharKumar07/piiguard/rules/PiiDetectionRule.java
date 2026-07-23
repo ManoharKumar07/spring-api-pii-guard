@@ -16,7 +16,7 @@ import java.util.Optional;
  * <p>To create a custom rule, implement this interface and register it with
  * {@link RuleRegistry#withAdditionalRules(java.util.List)}.
  *
- * <h3>Example</h3>
+ * <h2>Example</h2>
  * <pre>{@code
  * public class MyCustomRule implements PiiDetectionRule {
  *     public String ruleId()      { return "MY_CUSTOM_RULE"; }

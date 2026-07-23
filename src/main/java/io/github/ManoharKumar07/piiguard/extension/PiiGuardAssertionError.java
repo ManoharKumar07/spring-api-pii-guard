@@ -9,12 +9,12 @@ import java.nio.file.Path;
  * Thrown by {@link PiiGuardExtension} when {@code failOnFindings} is {@code true} and
  * the scan produces at least one finding at or above the configured minimum severity.
  *
- * <h3>Reading the error</h3>
+ * <h2>Reading the error</h2>
  * <p>The exception message lists every finding in a compact, readable format so that
  * developers can see what triggered the failure directly in the test output — without
  * having to open the HTML report. The full report path is appended at the end.
  *
- * <h3>Catching the error</h3>
+ * <h2>Catching the error</h2>
  * <p>Consumer tests that want to inspect findings programmatically can catch this error:
  * <pre>{@code
  * try {

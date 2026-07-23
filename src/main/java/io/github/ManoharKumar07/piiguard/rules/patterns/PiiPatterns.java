@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
  * is lowercased before matching. Pattern matching uses {@link java.util.regex.Matcher#find()}
  * so the pattern only needs to match a substring of the normalised name.
  *
- * <h3>Normalisation examples</h3>
+ * <h2>Normalisation examples</h2>
  * <pre>
  *   socialSecurityNumber → social_security_number
  *   passwordHash         → password_hash

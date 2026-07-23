@@ -20,7 +20,7 @@ import java.util.List;
  * JUnit 5 extension that automatically scans the application's REST API for PII exposure
  * before any tests run.
  *
- * <h3>Simple usage — {@code @ExtendWith}</h3>
+ * <h2>Simple usage — {@code @ExtendWith}</h2>
  * <pre>{@code
  * @ExtendWith(PiiGuardExtension.class)
  * class PiiGuardScanTest {
@@ -32,7 +32,7 @@ import java.util.List;
  * }
  * }</pre>
  *
- * <h3>Advanced usage — {@code @RegisterExtension}</h3>
+ * <h2>Advanced usage — {@code @RegisterExtension}</h2>
  * <pre>{@code
  * class PiiGuardScanTest {
  *
@@ -54,7 +54,7 @@ import java.util.List;
  * }
  * }</pre>
  *
- * <h3>Behaviour</h3>
+ * <h2>Behaviour</h2>
  * <ul>
  *   <li>The scan runs once per test class in {@code beforeAll}.</li>
  *   <li>An HTML report is always written to the configured output directory

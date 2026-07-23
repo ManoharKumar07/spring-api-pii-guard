@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * A {@link PiiDetectionRule} that detects PII by matching the normalised field name
  * against a compiled {@link Pattern}.
  *
- * <h3>Normalisation</h3>
+ * <h2>Normalisation</h2>
  * Before matching, the field's JSON name is normalised:
  * <ol>
  *   <li>camelCase → snake_case (insert underscore before each uppercase letter)</li>

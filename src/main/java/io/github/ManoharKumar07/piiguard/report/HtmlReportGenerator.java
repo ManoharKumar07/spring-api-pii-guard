@@ -26,7 +26,7 @@ import java.util.Map;
  * opened directly from the filesystem, shared via email, or archived without losing
  * fidelity.
  *
- * <h3>Report sections</h3>
+ * <h2>Report sections</h2>
  * <ol>
  *   <li><b>Header</b> — library name and scan timestamp</li>
  *   <li><b>Executive Summary</b> — severity-breakdown stat cards and overall status banner</li>

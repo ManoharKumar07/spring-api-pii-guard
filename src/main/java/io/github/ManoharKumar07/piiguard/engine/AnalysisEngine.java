@@ -24,11 +24,11 @@ import java.util.List;
  *   <li>Return an {@link AnalysisResult} with all findings</li>
  * </ol>
  *
- * <h3>Suppression</h3>
+ * <h2>Suppression</h2>
  * Fields annotated with {@code @PiiGuardSuppress} are skipped (or have specific rules
  * skipped) before rule evaluation, so they never appear in the findings list.
  *
- * <h3>@JsonIgnore handling</h3>
+ * <h2>@JsonIgnore handling</h2>
  * When a field carries {@code @JsonIgnore}, non-INFO rules are skipped and only the
  * {@link AnnotationRule} for {@code @JsonIgnore} produces an INFO finding, confirming
  * the field is correctly hidden from the API response.
