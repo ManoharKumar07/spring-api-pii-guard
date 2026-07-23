@@ -1,4 +1,4 @@
-# Spring API PII Guard
+﻿# Spring API PII Guard
 
 A JUnit 5 extension that automatically detects PII (Personally Identifiable Information) and sensitive data exposure in Spring Boot REST APIs — at test time, with zero application code changes.
 
@@ -24,7 +24,7 @@ PII Guard scans your Spring Boot controllers and their response/request DTOs dur
 
 ```xml
 <dependency>
-    <groupId>io.github.ManoharKumar07</groupId>
+    <groupId>io.github.manoharkumar07</groupId>
     <artifactId>spring-api-pii-guard</artifactId>
     <version>1.0.0</version>
     <scope>test</scope>
